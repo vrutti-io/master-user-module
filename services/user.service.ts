@@ -1,9 +1,9 @@
-import { CUSTOMER_CHILD_ROLE_ID, CUSTOMER_ROLE_ID } from '../config/constant.config';
-import { loginToken } from '../helpers/util';
-import { DecodeToken } from '../interface/auth.interface';
-import { UpdateUserToken, User } from '../interface/user.interface';
-import { UserStatus } from '../interface/user.interface';
-import models from '../models';
+import { CUSTOMER_CHILD_ROLE_ID, CUSTOMER_ROLE_ID } from '../../config/constant.config';
+import { loginToken } from '../../helpers/util';
+import { DecodeToken } from '../../interface/auth.interface';
+import { UpdateUserToken, User } from '../../interface/user.interface';
+import { UserStatus } from '../../interface/user.interface';
+import models from '../../models';
 export class UserService {
 
     public static updateUserStatus(project: string, user_id: number, status: UserStatus, modified_by?: any) {

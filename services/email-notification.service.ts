@@ -1,6 +1,6 @@
 import { Op } from "sequelize";
-import { AddEmailPayload, DeleteEmailPayload, UpdateEmailParamsPayload, UpdateEmailPayload } from "../interface/email-notification.interface";
-import models from "../models";
+import { AddEmailPayload, DeleteEmailPayload, UpdateEmailParamsPayload, UpdateEmailPayload } from "../../interface/email-notification.interface";
+import models from "../../models";
 
 export class EmailNotificationService {
     public static getEmail = async (project: string, account_id: number) => {
