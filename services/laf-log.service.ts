@@ -29,4 +29,18 @@ export class LAFLogService {
             }
         });
     };
+
+    public static resetCounter = async (email: string, project: string) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const path = `LAF:${project}:${email}`;
+
+                await redisClient.expire(path, 0);
+                
+                return resolve(true);
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
 }
