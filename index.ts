@@ -63,3 +63,6 @@ export { UserController, updateProfile, updateEmailSchema, verifyOTPSchema}
 
 import { LAFLogService } from './services/laf-log.service';
 export { LAFLogService };
+
+import { AddressController } from './web/address/address.controller';
+export { AddressController };
