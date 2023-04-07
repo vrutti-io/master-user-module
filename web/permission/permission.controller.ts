@@ -24,11 +24,11 @@ export class PermissionController {
                 attributes: ['lns_cnt', 'device_type_cnt', 'device_cnt']
             });
 
-            const permission = user_setting?.cu_role_permission ?? null;
+            const module = user_setting?.cu_role_permission ?? null;
             const plan = active_plan ?? null;
 
             const data = {
-                permission,
+                module,
                 plan
             }
 
