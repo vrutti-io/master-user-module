@@ -9,6 +9,7 @@ import { ProjectService } from '../../services/project.service';
 import firebase from 'firebase-admin';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 import axios from 'axios';
+import { MESSAGE } from '../../helpers/message';
 
 export class AuthService {
   public static createUserSession(project: string, session: Session, user: User,) {
@@ -158,11 +159,11 @@ export class AuthService {
         const secret_key = ProjectService.config[project].CAPTCHA_SITE_KEY;
         const response = await axios.post(`https://www.google.com/recaptcha/api/siteverify?secret=${secret_key}&response=${token}`);
         if (response.data.success) {
-          console.log('validateRecaptcha: ', response.data);
-          if (response.data.action != action) {
-            return reject('Invalid captcha');
-          } else if (response.data.score < 0.5) {
-            return reject('Invalid captcha');
+          if (response.data.action && response.data.action != action) {
+            return reject(MESSAGE.INVALID_CAPTCHA);
+          }
+          if (response.data.score < 0.5) {
+            return reject(MESSAGE.INVALID_CAPTCHA);
           }
           return resolve(true);
         } else {
