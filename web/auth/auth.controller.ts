@@ -51,6 +51,7 @@ export class AuthController {
         await LAFLogService.updateCounter(body.email_address, res.locals.project);
         return UnauthorizedResponse(res, req.t('AUTH.INVALID_PASSWORD'));
       }
+      await LAFLogService.resetCounter(body.email_address, res.locals.project);
       const token = await AuthService.createUserSession(res.locals.project, body, user);
 
       const response = {
@@ -237,7 +238,7 @@ export class AuthController {
       const UserSetting = models[res.locals.project].tbl_user_setting;
       const Account = models[res.locals.project].tbl_account;
       const CustomerRole = models[res.locals.project].master_customer_role;
-      const recaptcha = await AuthService.validateRecaptcha(res.locals.project, body.recaptcha_token, 'REGISTER_VERIFY_RECAPTCHA');
+      const recaptcha = await AuthService.validateRecaptcha(res.locals.project, body.recaptcha_token, /*'REGISTER_VERIFY_RECAPTCHA'*/);
       if (!recaptcha) return UnauthorizedResponse(res, req.t('AUTH.INVALID_RECAPTCHA'));
       const check_user = await User.findOne({
         where: { email_address: body.email_address },
@@ -385,7 +386,7 @@ export class AuthController {
       const User = models[res.locals.project].tbl_user;
 
       if (!(NODE_ENV === 'test')) {
-        const recaptcha = await AuthService.validateRecaptcha(res.locals.project, body.recaptcha_token, 'FORGOT_PASSWORD_VERIFY_RECAPTCHA');
+        const recaptcha = await AuthService.validateRecaptcha(res.locals.project, body.recaptcha_token, /*'FORGOT_PASSWORD_VERIFY_RECAPTCHA'*/);
         if (!recaptcha) return UnauthorizedResponse(res, req.t('AUTH.INVALID_RECAPTCHA'));
       }
 
