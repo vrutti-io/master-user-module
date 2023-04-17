@@ -8,6 +8,7 @@ export class PermissionController {
     public getAllPermissions = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const UserSetting = models[res.locals.project].tbl_user_setting;
+            console.log('UserSetting: ', UserSetting);
 
             const user_setting = await UserSetting.findOne({
                 where: {

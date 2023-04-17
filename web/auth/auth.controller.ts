@@ -368,7 +368,7 @@ export class AuthController {
       });
 
       const expiry_time = moment(find_email.timestamp).add(EMAIL_RESEND_IN_MINS, 'minutes');
-      if (moment().isBefore(expiry_time)) return UnauthorizedResponse(res, req.t('AUTH.EMAIL_VERIFY_LINK_SENT'));
+      if (moment().isBefore(expiry_time)) return UnauthorizedResponse(res, req.t('AUTH.VERIFICATION_EMAIL_ALREADY_SENT'));
 
       await AuthService.sendEmailVerifyLink(res.locals.project, find_user, req.ip);
 

@@ -159,9 +159,10 @@ export class AuthService {
         const response = await axios.post(`https://www.google.com/recaptcha/api/siteverify?secret=${secret_key}&response=${token}`);
         if (response.data.success) {
           console.log('validateRecaptcha: ', response.data);
-          if (response.data.action != action) {
-            return reject('Invalid captcha');
-          } else if (response.data.score < 0.5) {
+          // if (response.data.action != action) {
+          //   return reject('Invalid captcha');
+          // } else
+          if (response.data.score < 0.5) {
             return reject('Invalid captcha');
           }
           return resolve(true);
