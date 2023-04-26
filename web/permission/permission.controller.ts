@@ -16,7 +16,11 @@ export class PermissionController {
                 attributes: ['cu_role_permission']
             });
 
-            return SuccessResponse(res, req.t('COMMON.GET'), user_setting);
+            const permission = {
+                ...user_setting?.cu_role_permission ?? null,
+            }
+
+            return SuccessResponse(res, req.t('COMMON.GET'), permission);
         } catch (err) {
             next(err);
         }
