@@ -9,8 +9,12 @@ import { EmailService } from '../../../services/email.service';
 import { UserService } from '../../services/user.service';
 import { decode } from '../../../helpers/jwt';
 import { LAFLogService } from '../../services/laf-log.service';
+import { PlanService } from '../../../services/plan.service';
+
 
 export class AuthController {
+
+  private planService: PlanService = new PlanService();
 
   public login = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -130,6 +134,9 @@ export class AuthController {
             name: find_user.name
           }
         };
+
+        this.planService.activateStarterPlan(res.locals.project, find_user.account_id);
+
         return SuccessResponse(res, req.t('AUTH.LOGIN_SUCCESS'), response);
       } else {
         // register user
@@ -335,7 +342,9 @@ export class AuthController {
         email_address: find_user.email_address,
         user_id: find_user.id,
       };
+
       await EmailService.ses_customer_welcome(res.locals.project, email_content);
+      this.planService.activateStarterPlan(res.locals.project, find_user.account_id);
 
       return SuccessResponse(res, req.t('AUTH.EMAIL_VERIFIED_SUCCESS'));
     } catch (err) {
