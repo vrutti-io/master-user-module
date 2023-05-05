@@ -219,7 +219,6 @@ export class UserController {
         role_id: res.locals.user.role_id,
       };
 
-      console.log('payload: ', payload);
       const token = await UserService.updateUserToken(res.locals.project, payload);
 
       await find_user.update({
