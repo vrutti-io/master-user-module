@@ -172,6 +172,7 @@ export class UserService {
                     id: payload.id,
                     email_address: payload.email_address,
                     role_id: payload.role_id,
+                    project: project,
                     account_id: payload.account_id,
                     session_id: payload.session_id,
                     customer_role_id: payload.customer_role_id,
