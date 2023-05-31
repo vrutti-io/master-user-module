@@ -60,7 +60,6 @@ export class AdminPermissionController {
           module_id: body.module_id,
         },
       });
-      if (!permission) return BadRequestResponse(res, "Permission not found");
       if (permission) {
         await permission.update({ ...body, modified_by: user.user_id, modified_time: new Date() });
       } else {
