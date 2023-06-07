@@ -170,6 +170,7 @@ export class UserService {
 
                 const token = loginToken({
                     id: payload.id,
+                    name: payload.name ?? '',
                     email_address: payload.email_address,
                     role_id: payload.role_id,
                     project: project,
