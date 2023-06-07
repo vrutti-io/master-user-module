@@ -59,7 +59,6 @@ export class AuthService {
 
         const token = loginToken({
           id: user.id,
-          name: user.name ?? '',
           email_address: user.email_address,
           role_id: user.role_id,
           account_id: user.account_id,
