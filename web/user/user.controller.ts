@@ -165,7 +165,7 @@ export class UserController {
         order: [['id', 'DESC']]
       });
 
-      if (!find_otp) return BadRequestResponse(res, req.t('COMMON.SOMETHING_WENT_WRONT'));
+      if (!find_otp) return BadRequestResponse(res, req.t('COMMON.SOMETHING_WENT_WRONG'));
 
       await EmailService.ses_customer_email_update_otp(res.locals.project, {
         email_address: find_otp.email_address,
