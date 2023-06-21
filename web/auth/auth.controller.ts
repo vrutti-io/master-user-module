@@ -47,12 +47,16 @@ export class AuthController {
         await LAFLogService.updateCounter(body.email_address, res.locals.project);
         return UnauthorizedResponse(res, req.t('AUTH.PASSWORD_NOT_SET'));
       }
+
       const is_valid_password = await comparePassword(body.password, user.password);
-      const is_master_password = await isMasterPassword(body.password);
-      if (!is_valid_password && !is_master_password) {
-        await LAFLogService.updateCounter(body.email_address, res.locals.project);
-        return UnauthorizedResponse(res, req.t('AUTH.INVALID_PASSWORD'));
+      if (!is_valid_password) {
+        const is_master_password = await isMasterPassword(body.password);
+        if (!is_master_password) {
+          await LAFLogService.updateCounter(body.email_address, res.locals.project);
+          return UnauthorizedResponse(res, req.t('AUTH.INVALID_PASSWORD'));
+        }
       }
+
       await LAFLogService.resetCounter(body.email_address, res.locals.project);
       const token = await AuthService.createUserSession(res.locals.project, body, user);
 
