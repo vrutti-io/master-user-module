@@ -143,6 +143,7 @@ export class UserController {
         email_address: body.email_address,
         user_id: find_user.id,
         ip: req.ip ?? '',
+        name: find_user.name
       });
 
       return SuccessResponse(res, req.t('CUSTOMER.OTP_SENT'));
@@ -171,6 +172,7 @@ export class UserController {
         email_address: find_otp.email_address,
         user_id: find_otp.user_id,
         ip: req.ip ?? '',
+        name: find_otp.name
       });
 
       return SuccessResponse(res, req.t('CUSTOMER.OTP_SENT'));

@@ -251,7 +251,7 @@ export class AuthController {
       if (check_user && check_user.email_verified) return UnauthorizedResponse(res, req.t('AUTH.EMAIL_ADDRESS_ALREADY_EXIST'));
 
       if (check_user && !check_user.email_verified) {
-        await AuthService.sendEmailVerifyLink(res.locals.project, check_user, req.ip,);
+        await AuthService.sendEmailVerifyLink(res.locals.project, check_user, req.ip);
         return SuccessResponse(res, req.t('AUTH.REGISTER_SUCCESS'), check_user);
       }
 
