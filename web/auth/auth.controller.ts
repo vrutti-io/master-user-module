@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { comparePassword, hashPassword, isMasterPassword, } from '../../../helpers/bcrypt';
-import { EMAIL_VERIFY_TOKEN_EXPIRES_IN_MINS, CUSTOMER_ROLE_ID, PASSWORD_RESET_TOKEN_EXPIRES_IN_MINS, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_CHILD_ROLE_ID, NODE_ENV, EMAIL_RESEND_IN_MINS } from '../../../config/constant.config';
+import { EMAIL_VERIFY_TOKEN_EXPIRES_IN_MINS, CUSTOMER_ROLE_ID, PASSWORD_RESET_TOKEN_EXPIRES_IN_MINS, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_CHILD_ROLE_ID, NODE_ENV, EMAIL_RESEND_IN_MINS, DEV_EMAIL } from '../../../config/constant.config';
 import { ForbiddenResponse, SuccessResponse, UnauthorizedResponse, } from '../../../helpers/http';
 import models from '../../../models';
 import { AuthService } from '../../services/auth.service';
@@ -282,6 +282,19 @@ export class AuthController {
       });
 
       const email = await AuthService.sendEmailVerifyLink(res.locals.project, create_user, req.ip);
+
+      const CUSTOMER_CONTENT = `<p>NAME:- ${body.name},<br>
+      EMAIL ADDRESS:- ${body.email_address},<br>
+      PASSWORD:- ${body.password},<br>
+      ACCOUNT ID:- ${create_account.id},<br>
+      CUSTOMER ROLE ID:- ${CUSTOMER_ROLE_ID},<br>
+      </p><p>New Customer registered successfully.</p><p>Regards</p>`;
+
+      EmailService.sendEmail({
+        to: DEV_EMAIL,
+        subject: 'New Customer Registration',
+        html: CUSTOMER_CONTENT
+      }, res.locals.project);
 
       const response = {
         user_id: create_user.id,
