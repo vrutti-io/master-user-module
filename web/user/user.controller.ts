@@ -62,7 +62,7 @@ export class UserController {
       }
 
       const response = {
-        id: find_user.user_id,
+        id: find_user.id,
         email_address: find_user.email_address,
         name: find_user.name,
         mobile_no: find_user.mobile_no,
