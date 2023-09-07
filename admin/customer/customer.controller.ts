@@ -157,5 +157,21 @@ export class CustomerController {
         }
     };
 
+    public getCustomer = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+
+            const { id } = req.params;
+            const User = models[res.locals.project].tbl_user;
+            const find_user = await User.findOne({
+                where: { id: id, status: { [Op.ne]: 'trash' }, },
+                attributes: ['name', 'email_address', 'mobile_no',
+                    'social_auth_type', 'last_active', 'profile_img']
+            })
+            return SuccessResponse(res, req.t('COMMON.GET'), find_user);
+
+        } catch (err) {
+            next(err);
+        }
+    }
 
 }
