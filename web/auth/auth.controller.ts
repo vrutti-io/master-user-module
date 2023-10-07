@@ -9,6 +9,7 @@ import { EmailService } from '../../../services/email.service';
 import { UserService } from '../../services/user.service';
 import { decode } from '../../../helpers/jwt';
 import { LAFLogService } from '../../services/laf-log.service';
+import { Op } from 'sequelize';
 
 
 export class AuthController {
@@ -21,6 +22,9 @@ export class AuthController {
       const user = await User.findOne({
         where: {
           email_address: body.email_address,
+          status: {
+            [Op.ne]: 'trash',
+          }
         },
       });
       if (!user) {
@@ -58,20 +62,9 @@ export class AuthController {
       }
 
       await LAFLogService.resetCounter(body.email_address, res.locals.project);
-      const token = await AuthService.createUserSession(res.locals.project, body, user);
+      const tokens = await AuthService.createUserSession(res.locals.project, body, user);
 
-      const response = {
-        token: token,
-        user: {
-          email_address: user.email_address,
-          user_id: user.id,
-          role_id: user.role_id,
-          account_id: user.account_id,
-          name: user.name
-        }
-      };
-
-      return SuccessResponse(res, req.t('AUTH.LOGIN_SUCCESS'), response);
+      return SuccessResponse(res, req.t('AUTH.LOGIN_SUCCESS'), tokens);
     } catch (err) {
       next(err);
     }
@@ -89,6 +82,9 @@ export class AuthController {
       const find_user = await User.findOne({
         where: {
           email_address: body.email_address,
+          status: {
+            [Op.ne]: 'trash',
+          }
         },
       });
       if (!(NODE_ENV === 'test')) {

@@ -15,7 +15,6 @@ export class TeamController {
     try {
       const { body } = req;
       const UserInvite = models[res.locals.project].tbl_user_invite;
-      const User = models[res.locals.project].tbl_user;
 
       const check_invite = await UserInvite.findOne({
         where: {
@@ -24,13 +23,7 @@ export class TeamController {
       });
 
       if (check_invite?.status === 'invited') return ForbiddenResponse(res, req.t('CUSTOMER.USER_ALREADY_INVITED'));
-
-      const check_user = await User.findOne({
-        where: {
-          email_address: body.email_address
-        },
-      });
-      if (check_user) return ForbiddenResponse(res, req.t('CUSTOMER.USER_ALREADY_REGISTERED'));
+      if (check_invite?.status === 'accepted') return ForbiddenResponse(res, req.t('CUSTOMER.USER_ALREADY_REGISTERED'));
 
       const invitation_code = randomString(50);
       const create_user_invite = await UserInvite.create({
@@ -62,6 +55,7 @@ export class TeamController {
     try {
       const { code } = req.params;
       const UserInvite = models[res.locals.project].tbl_user_invite;
+      const User = models[res.locals.project].tbl_user;
 
       const find_invite = await UserInvite.findOne({
         where: {
@@ -73,8 +67,16 @@ export class TeamController {
       if (find_invite.status === 'accepted') return UnauthorizedResponse(res, req.t('CUSTOMER.USER_ALREADY_REGISTERED'));
       if (find_invite.status === 'expired') return UnauthorizedResponse(res, req.t('CUSTOMER.INVITATION_LINK_EXPIRED'));
 
+      const find_user = await User.findOne({
+        where: {
+          email_address: find_invite.email_address,
+          status: 'active'
+        },
+      });
 
-      return SuccessResponse(res, req.t('CUSTOMER.USER_INVITE_FOUND'));
+      const user_registered = find_user ? true : false;
+
+      return SuccessResponse(res, req.t('CUSTOMER.USER_INVITE_FOUND'), { user_registered });
 
     } catch (err) {
       next(err);
@@ -87,6 +89,7 @@ export class TeamController {
       const UserInvite = models[res.locals.project].tbl_user_invite;
       const User = models[res.locals.project].tbl_user;
       const UserSetting = models[res.locals.project].tbl_user_setting;
+      const UserAccountMap = models[res.locals.project].tbl_user_account_map;
 
       const find_invite = await UserInvite.findOne({
         where: {
@@ -100,40 +103,55 @@ export class TeamController {
       const find_user = await User.findOne({
         where: {
           email_address: find_invite.email_address,
+          status: { 
+            [Op.or]: ['pending', 'active']
+          },
         },
       });
 
-      if (find_user) return ForbiddenResponse(res, req.t('CUSTOMER.USER_ALREADY_REGISTERED'));
+      if (find_user?.status === 'pending') return ForbiddenResponse(res, req.t('CUSTOMER.USER_ACCOUNT_ACTIVATION_REQUIRED'));
 
-      const password = await hashPassword(body.password);
-      const create_user = await User.create({
+      let userId = find_user?.id ?? null;
+
+      if (!find_user) {
+
+        const password = await hashPassword(body.password);
+        const create_user = await User.create({
+          account_id: find_invite.account_id,
+          email_address: find_invite.email_address,
+          name: body.name,
+          password: password,
+          status: 'active',
+          email_verified: true,
+          role_id: CUSTOMER_CHILD_ROLE_ID
+        });
+
+        userId = create_user.id;
+
+        await UserSetting.create({
+          user_id: create_user.id,
+          cu_role_id: find_invite.cu_role_id,
+          cu_role_permission: find_invite.cu_role_permission
+        });
+
+        await UserService.addEmailForNotification(res.locals.project, create_user.id);
+
+        const email_content = {
+          name: create_user.email_address,
+          email_address: create_user.email_address,
+          user_id: create_user.id,
+        };
+        await EmailService.ses_customer_welcome(res.locals.project, email_content);
+      }
+
+      await UserAccountMap.create({
+        user_id: userId,
         account_id: find_invite.account_id,
-        email_address: find_invite.email_address,
-        name: body.name,
-        password: password,
-        status: 'active',
-        email_verified: true,
-        role_id: CUSTOMER_CHILD_ROLE_ID
       });
-
-      await UserSetting.create({
-        user_id: create_user.id,
-        cu_role_id: find_invite.cu_role_id,
-        cu_role_permission: find_invite.cu_role_permission
-      });
-
-      await UserService.addEmailForNotification(res.locals.project, create_user.id);
 
       await find_invite.update({
         status: 'accepted',
       });
-
-      const email_content = {
-        name: create_user.email_address,
-        email_address: create_user.email_address,
-        user_id: create_user.id,
-      };
-      await EmailService.ses_customer_welcome(res.locals.project, email_content);
 
       return SuccessResponse(res, req.t('CUSTOMER.INVITATION_ACCEPTED_SUCCESS'));
 
@@ -188,6 +206,7 @@ export class TeamController {
     try {
       const { id } = req.params;
       const UserInvite = models[res.locals.project].tbl_user_invite;
+      const UserAccountMap = models[res.locals.project].tbl_user_account_map;
 
       const find_invite = await UserInvite.findOne({
         where: { id },
@@ -207,6 +226,15 @@ export class TeamController {
 
           if (find_user) {
             UserService.deleteUser(res.locals.project, find_user.id, res.locals.user.user_id);
+
+            await UserAccountMap.update({
+              status: 0
+            }, {
+              where: {
+                user_id: find_user.id,
+                account_id: find_invite.account_id
+              }
+            });
           }
 
         }
