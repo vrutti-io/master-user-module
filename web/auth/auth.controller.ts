@@ -102,7 +102,7 @@ export class AuthController {
 
       if (find_user) {
         // login user
-        if (find_user.role_id !== +CUSTOMER_ROLE_ID) {
+        if (find_user.role_id !== +CUSTOMER_ROLE_ID || find_user.role_id !== +CUSTOMER_OWNER_ROLE_ID) {
           await LAFLogService.updateCounter(body.email_address, res.locals.project);
           return UnauthorizedResponse(res, req.t('AUTH.UNAUTHORIZED_USER'));
         }
@@ -120,21 +120,9 @@ export class AuthController {
           });
         }
 
-        const token = await AuthService.createUserSession(res.locals.project, body, find_user);
+        const tokens = await AuthService.createUserSession(res.locals.project, body, find_user);
 
-        const response = {
-          token: token,
-          user: {
-            email_address: find_user.email_address,
-            user_id: find_user.id,
-            role_id: find_user.role_id,
-            accound_id: find_user.accound_id,
-            name: find_user.name
-          }
-        };
-
-
-        return SuccessResponse(res, req.t('AUTH.LOGIN_SUCCESS'), response);
+        return SuccessResponse(res, req.t('AUTH.LOGIN_SUCCESS'), tokens);
       } else {
         // register user
         const create_account = await Account.create({
@@ -170,19 +158,9 @@ export class AuthController {
 
         await EmailService.ses_customer_welcome(res.locals.project, email_content);
 
-        const token = await AuthService.createUserSession(res.locals.project, body, create_user);
+        const tokens = await AuthService.createUserSession(res.locals.project, body, create_user);
 
-        const response = {
-          token: token,
-          user: {
-            email_address: create_user.email_address,
-            user_id: create_user.id,
-            role_id: create_user.role_id,
-            accound_id: create_user.accound_id,
-            name: create_user.name
-          }
-        };
-        return SuccessResponse(res, req.t('AUTH.LOGIN_SUCCESS'), response);
+        return SuccessResponse(res, req.t('AUTH.LOGIN_SUCCESS'), tokens);
 
       }
 
