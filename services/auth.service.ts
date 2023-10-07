@@ -1,4 +1,4 @@
-import { NODE_ENV } from '../../config/constant.config';
+import { CUSTOMER_CHILD_ROLE_ID, CUSTOMER_ROLE_ID, NODE_ENV } from '../../config/constant.config';
 import { loginToken } from '../../helpers/util';
 import { Session } from '../../interface/auth.interface';
 import { EmailVerify, ForgotPasswordEmail } from '../../interface/email.interface';
@@ -13,11 +13,14 @@ import { MESSAGE } from '../../helpers/message';
 
 export class AuthService {
   public static createUserSession(project: string, session: Session, user: User,) {
-    return new Promise<string>(async (resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         const UserSession = models[project].tbl_user_session;
         const UserSetting = models[project].tbl_user_setting;
         const UserSessionHistory = models[project].tbl_user_session_history;
+        const UserInvite = models[project].tbl_user_invite;
+        const UserAccountMap = models[project].tbl_user_account_map;
+        const User = models[project].tbl_user;
 
         const find_session = await UserSession.findOne({
           where: {
@@ -55,27 +58,70 @@ export class AuthService {
           user_id: user.id,
         });
 
-        const get_user_setting = await UserSetting.findOne({ where: { user_id: user.id } });
+        const cu_role_id = [];
+        const account_ids = [];
+        let get_user_setting, get_user_invite;
 
-        const token = loginToken({
-          id: user.id,
-          email_address: user.email_address,
-          role_id: user.role_id,
-          account_id: user.account_id,
-          project: project,
-          session_id: create_session.id,
-          customer_role_id: get_user_setting.cu_role_id
-        }, 'web',);
+        const get_user_account_map = await UserAccountMap.findAll({ where: { user_id: user.id, status: 1 } });
 
-        await create_session.update({
-          login_token: token,
-        });
+        if (user.role_id === CUSTOMER_ROLE_ID || user.role_id === CUSTOMER_CHILD_ROLE_ID) {
 
-        await get_user_setting.update({
-          last_active: new Date(),
-        });
+          if (user.role_id === CUSTOMER_ROLE_ID) {
+            account_ids.push(user.account_id);
+            get_user_setting = await UserSetting.findOne({ where: { user_id: user.id } });
+            cu_role_id.push(get_user_setting?.cu_role_id);
+          }
 
-        resolve(token);
+          if (get_user_account_map.length > 0) {
+
+            for (let i = 0; i < get_user_account_map.length; i++) {
+              account_ids.push(get_user_account_map[i].account_id);
+              get_user_invite = await UserInvite.findOne({ where: { email_address: user.email_address, account_id: get_user_account_map[i].account_id, status: 'accepted' } });
+              cu_role_id.push(get_user_invite?.cu_role_id);
+            }
+          }
+        }
+
+        const tokens = [];
+
+        for (let i = 0; i < account_ids.length; i++) {
+
+          const get_user_details = await User.findOne({
+            where: {
+              account_id: account_ids[i],
+              status: 'active',
+            },
+          });
+
+          const get_token = loginToken({
+            id: user.id,
+            email_address: user.email_address,
+            role_id: user.role_id,
+            account_id: account_ids[i],
+            project: project,
+            session_id: create_session.id,
+            customer_role_id: cu_role_id[i],
+          }, 'web',);
+
+          const user_payload = { 
+            email_address: get_user_details.email_address, 
+            user_id: get_user_details.id,
+            role_id: get_user_details.role_id,
+            account_id: account_ids[i], 
+            name: get_user_details.name,
+            token: get_token 
+          };
+
+          tokens.push(user_payload);
+        }
+
+        if (user.role_id === CUSTOMER_ROLE_ID || user.role_id === CUSTOMER_CHILD_ROLE_ID) {
+          await get_user_setting.update({
+            last_active: new Date(),
+          });
+        }
+
+        resolve(tokens);
       } catch (err) {
         reject(err);
       }

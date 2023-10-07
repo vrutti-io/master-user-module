@@ -1,9 +1,10 @@
-import { CUSTOMER_CHILD_ROLE_ID, CUSTOMER_ROLE_ID } from '../../config/constant.config';
+import { CUSTOMER_CHILD_ROLE_ID, CUSTOMER_ROLE_ID, DEV_EMAIL } from '../../config/constant.config';
 import { loginToken } from '../../helpers/util';
 import { DecodeToken } from '../../interface/auth.interface';
 import { UpdateUserToken, User } from '../../interface/user.interface';
 import { UserStatus } from '../../interface/user.interface';
 import models from '../../models';
+import { EmailService } from '../../services/email.service';
 export class UserService {
 
     public static updateUserStatus(project: string, user_id: number, status: UserStatus, modified_by?: any) {
@@ -83,6 +84,19 @@ export class UserService {
                             await deleteCustomerChild(project, find_user);
                         }
                     }
+
+                    const CUSTOMER_CONTENT = `<p>USER NAME:- ${find_user.name},<br>
+                    EMAIL ADDRESS:- ${find_user.email_address},<br>
+                    ACCOUNT ID:- ${find_user.account_id},<br>
+                    CUSTOMER ROLE ID:- ${CUSTOMER_ROLE_ID},<br>
+                    </p><p>Account deleted successfully.</p><p>Regards</p>`;
+
+                    EmailService.sendEmail({
+                        to: DEV_EMAIL,
+                        subject: 'Delete Cutomer Account',
+                        html: CUSTOMER_CONTENT
+                    }, project);
+
                     return resolve(1);
                 }
                 return resolve(0);

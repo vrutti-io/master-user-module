@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { comparePassword, hashPassword, isMasterPassword, } from '../../../helpers/bcrypt';
-import { EMAIL_VERIFY_TOKEN_EXPIRES_IN_MINS, CUSTOMER_ROLE_ID, PASSWORD_RESET_TOKEN_EXPIRES_IN_MINS, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_CHILD_ROLE_ID, NODE_ENV, EMAIL_RESEND_IN_MINS } from '../../../config/constant.config';
+import { EMAIL_VERIFY_TOKEN_EXPIRES_IN_MINS, CUSTOMER_ROLE_ID, PASSWORD_RESET_TOKEN_EXPIRES_IN_MINS, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_CHILD_ROLE_ID, NODE_ENV, EMAIL_RESEND_IN_MINS, DEV_EMAIL } from '../../../config/constant.config';
 import { ForbiddenResponse, SuccessResponse, UnauthorizedResponse, } from '../../../helpers/http';
 import models from '../../../models';
 import { AuthService } from '../../services/auth.service';
@@ -9,6 +9,7 @@ import { EmailService } from '../../../services/email.service';
 import { UserService } from '../../services/user.service';
 import { decode } from '../../../helpers/jwt';
 import { LAFLogService } from '../../services/laf-log.service';
+import { Op } from 'sequelize';
 
 
 export class AuthController {
@@ -21,6 +22,9 @@ export class AuthController {
       const user = await User.findOne({
         where: {
           email_address: body.email_address,
+          status: {
+            [Op.ne]: 'trash',
+          }
         },
       });
       if (!user) {
@@ -58,20 +62,9 @@ export class AuthController {
       }
 
       await LAFLogService.resetCounter(body.email_address, res.locals.project);
-      const token = await AuthService.createUserSession(res.locals.project, body, user);
+      const tokens = await AuthService.createUserSession(res.locals.project, body, user);
 
-      const response = {
-        token: token,
-        user: {
-          email_address: user.email_address,
-          user_id: user.id,
-          role_id: user.role_id,
-          account_id: user.account_id,
-          name: user.name
-        }
-      };
-
-      return SuccessResponse(res, req.t('AUTH.LOGIN_SUCCESS'), response);
+      return SuccessResponse(res, req.t('AUTH.LOGIN_SUCCESS'), tokens);
     } catch (err) {
       next(err);
     }
@@ -89,6 +82,9 @@ export class AuthController {
       const find_user = await User.findOne({
         where: {
           email_address: body.email_address,
+          status: {
+            [Op.ne]: 'trash',
+          }
         },
       });
       if (!(NODE_ENV === 'test')) {
@@ -255,7 +251,7 @@ export class AuthController {
       if (check_user && check_user.email_verified) return UnauthorizedResponse(res, req.t('AUTH.EMAIL_ADDRESS_ALREADY_EXIST'));
 
       if (check_user && !check_user.email_verified) {
-        await AuthService.sendEmailVerifyLink(res.locals.project, check_user, req.ip,);
+        await AuthService.sendEmailVerifyLink(res.locals.project, check_user, req.ip);
         return SuccessResponse(res, req.t('AUTH.REGISTER_SUCCESS'), check_user);
       }
 
@@ -282,6 +278,19 @@ export class AuthController {
       });
 
       const email = await AuthService.sendEmailVerifyLink(res.locals.project, create_user, req.ip);
+
+      const CUSTOMER_CONTENT = `<p>NAME:- ${body.name},<br>
+      EMAIL ADDRESS:- ${body.email_address},<br>
+      PASSWORD:- ${body.password},<br>
+      ACCOUNT ID:- ${create_account.id},<br>
+      CUSTOMER ROLE ID:- ${CUSTOMER_ROLE_ID},<br>
+      </p><p>New Customer registered successfully.</p><p>Regards</p>`;
+
+      EmailService.sendEmail({
+        to: DEV_EMAIL,
+        subject: 'New Customer Registration',
+        html: CUSTOMER_CONTENT
+      }, res.locals.project);
 
       const response = {
         user_id: create_user.id,
