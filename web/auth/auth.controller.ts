@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { comparePassword, hashPassword, isMasterPassword, } from '../../../helpers/bcrypt';
 import { EMAIL_VERIFY_TOKEN_EXPIRES_IN_MINS, CUSTOMER_ROLE_ID, PASSWORD_RESET_TOKEN_EXPIRES_IN_MINS, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_CHILD_ROLE_ID, NODE_ENV, EMAIL_RESEND_IN_MINS, DEV_EMAIL } from '../../../config/constant.config';
-import { ForbiddenResponse, SuccessResponse, UnauthorizedResponse, } from '../../../helpers/http';
+import { ForbiddenResponse, InvalidTokenResponse, SuccessResponse, UnauthorizedResponse, } from '../../../helpers/http';
 import models from '../../../models';
 import { AuthService } from '../../services/auth.service';
 import moment from 'moment-timezone';
@@ -550,5 +550,30 @@ export class AuthController {
       next(err);
     }
   };
+
+  public getAccounts = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const UserSession = models[res.locals.project].tbl_user_session;
+
+      const token = req.headers.authorization?.replace(/^bearer/i, '').trim();
+      if (!token) return InvalidTokenResponse(res);
+      const user = decode(token);
+
+      const find_session = await UserSession.findOne({
+        where: {
+          id: user.session_id,
+        },
+      });
+
+      if (!find_session) return InvalidTokenResponse(res);
+
+      const tokens = await AuthService.getAccountsService(res.locals.project, user, find_session.id);
+``
+      return SuccessResponse(res, req.t('AUTH.LOGIN_SUCCESS'), tokens);
+
+    } catch (err) {
+      next(err);
+    }
+  }
 
 }

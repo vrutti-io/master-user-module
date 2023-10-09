@@ -16,11 +16,7 @@ export class AuthService {
     return new Promise(async (resolve, reject) => {
       try {
         const UserSession = models[project].tbl_user_session;
-        const UserSetting = models[project].tbl_user_setting;
         const UserSessionHistory = models[project].tbl_user_session_history;
-        const UserInvite = models[project].tbl_user_invite;
-        const UserAccountMap = models[project].tbl_user_account_map;
-        const User = models[project].tbl_user;
 
         const find_session = await UserSession.findOne({
           where: {
@@ -58,69 +54,7 @@ export class AuthService {
           user_id: user.id,
         });
 
-        const cu_role_id = [];
-        const account_array: AccountArray[] = [];
-        let get_user_setting, get_user_invite;
-
-        const get_user_account_map = await UserAccountMap.findAll({ where: { user_id: user.id, status: 1 } });
-
-        if (user.role_id === CUSTOMER_ROLE_ID || user.role_id === CUSTOMER_CHILD_ROLE_ID) {
-
-          if (user.role_id === CUSTOMER_ROLE_ID) {
-            account_array.push({ account_id: user.account_id, account_type: 'self' });
-            get_user_setting = await UserSetting.findOne({ where: { user_id: user.id } });
-            cu_role_id.push(get_user_setting?.cu_role_id);
-          }
-
-          if (get_user_account_map.length > 0) {
-
-            for (let i = 0; i < get_user_account_map.length; i++) {
-              account_array.push({ account_id: get_user_account_map[i].account_id, account_type: 'other' });
-              get_user_invite = await UserInvite.findOne({ where: { email_address: user.email_address, account_id: get_user_account_map[i].account_id, status: 'accepted' } });
-              cu_role_id.push(get_user_invite?.cu_role_id);
-            }
-          }
-        }
-
-        const tokens = [];
-
-        for (let i = 0; i < account_array.length; i++) {
-
-          const get_user_details = await User.findOne({
-            where: {
-              account_id: account_array[i].account_id,
-              status: 'active',
-            },
-          });
-
-          const get_token = loginToken({
-            id: user.id,
-            email_address: user.email_address,
-            role_id: user.role_id,
-            account_id: account_array[i].account_id,
-            project: project,
-            session_id: create_session.id,
-            customer_role_id: cu_role_id[i],
-          }, 'web',);
-
-          const user_payload = { 
-            email_address: get_user_details.email_address, 
-            user_id: get_user_details.id,
-            role_id: get_user_details.role_id,
-            account_id: account_array[i].account_id, 
-            name: get_user_details.name,
-            account_type: account_array[i].account_type,
-            token: get_token 
-          };
-
-          tokens.push(user_payload);
-        }
-
-        if (user.role_id === CUSTOMER_ROLE_ID || user.role_id === CUSTOMER_CHILD_ROLE_ID) {
-          await get_user_setting.update({
-            last_active: new Date(),
-          });
-        }
+        const tokens = await this.getAccountsService(project, user, create_session.id);
 
         resolve(tokens);
       } catch (err) {
@@ -217,6 +151,87 @@ export class AuthService {
         } else {
           return reject(response.data['error-codes']);
         }
+      } catch (err) {
+        return reject(err);
+      }
+    });
+  };
+
+  public static getAccountsService = (project: string, user: User, session_id: number) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const UserSetting = models[project].tbl_user_setting;
+        const UserInvite = models[project].tbl_user_invite;
+        const UserAccountMap = models[project].tbl_user_account_map;
+        const User = models[project].tbl_user;
+
+        const user_id = user.id ? user.id : user.user_id;
+        const cu_role_id = [];
+        const account_array: AccountArray[] = [];
+        let get_user_setting, get_user_invite;
+
+        const get_user_account_map = await UserAccountMap.findAll({ where: { user_id: user_id, status: 1 } });
+
+        if (user.role_id === CUSTOMER_ROLE_ID || user.role_id === CUSTOMER_CHILD_ROLE_ID) {
+
+          if (user.role_id === CUSTOMER_ROLE_ID) {
+            account_array.push({ account_id: user.account_id, account_type: 'self' });
+            get_user_setting = await UserSetting.findOne({ where: { user_id: user_id} });
+            cu_role_id.push(get_user_setting?.cu_role_id);
+          }
+
+          if (get_user_account_map.length > 0) {
+
+            for (let i = 0; i < get_user_account_map.length; i++) {
+              account_array.push({ account_id: get_user_account_map[i].account_id, account_type: 'other' });
+              get_user_invite = await UserInvite.findOne({ where: { email_address: user.email_address, account_id: get_user_account_map[i].account_id, status: 'accepted' } });
+              cu_role_id.push(get_user_invite?.cu_role_id);
+            }
+          }
+        }
+
+        const tokens = [];
+
+        for (let i = 0; i < account_array.length; i++) {
+
+          const get_user_details = await User.findOne({
+            where: {
+              account_id: account_array[i].account_id,
+              status: 'active',
+            },
+          });
+
+          const get_token = loginToken({
+            id: Number(user_id),
+            email_address: user.email_address,
+            role_id: user.role_id,
+            account_id: account_array[i].account_id,
+            project: project,
+            session_id: session_id,
+            customer_role_id: cu_role_id[i],
+          }, 'web',);
+
+          const user_payload = {
+            email_address: get_user_details.email_address,
+            user_id: get_user_details.id,
+            role_id: get_user_details.role_id,
+            account_id: account_array[i].account_id,
+            name: get_user_details.name,
+            account_type: account_array[i].account_type,
+            token: get_token
+          };
+
+          tokens.push(user_payload);
+        }
+
+        if (user.role_id === CUSTOMER_ROLE_ID || user.role_id === CUSTOMER_CHILD_ROLE_ID) {
+          await get_user_setting.update({
+            last_active: new Date(),
+          });
+        }
+
+        resolve(tokens);
+
       } catch (err) {
         return reject(err);
       }
