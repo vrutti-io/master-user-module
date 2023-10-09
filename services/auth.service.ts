@@ -175,7 +175,8 @@ export class AuthService {
         if (user.role_id === CUSTOMER_ROLE_ID || user.role_id === CUSTOMER_CHILD_ROLE_ID) {
 
           if (user.role_id === CUSTOMER_ROLE_ID) {
-            account_array.push({ account_id: user.account_id, account_type: 'self' });
+            const get_user = await User.findByPk(user_id);
+            account_array.push({ account_id: get_user.account_id, account_type: 'self' });
             get_user_setting = await UserSetting.findOne({ where: { user_id: user_id} });
             cu_role_id.push(get_user_setting?.cu_role_id);
           }
