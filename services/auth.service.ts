@@ -1,6 +1,6 @@
 import { CUSTOMER_CHILD_ROLE_ID, CUSTOMER_ROLE_ID, NODE_ENV } from '../../config/constant.config';
 import { loginToken } from '../../helpers/util';
-import { Session } from '../../interface/auth.interface';
+import { AccountArray, Session } from '../../interface/auth.interface';
 import { EmailVerify, ForgotPasswordEmail } from '../../interface/email.interface';
 import { User } from '../../interface/user.interface';
 import models from '../../models';
@@ -59,7 +59,7 @@ export class AuthService {
         });
 
         const cu_role_id = [];
-        const account_ids = [];
+        const account_array: AccountArray[] = [];
         let get_user_setting, get_user_invite;
 
         const get_user_account_map = await UserAccountMap.findAll({ where: { user_id: user.id, status: 1 } });
@@ -67,7 +67,7 @@ export class AuthService {
         if (user.role_id === CUSTOMER_ROLE_ID || user.role_id === CUSTOMER_CHILD_ROLE_ID) {
 
           if (user.role_id === CUSTOMER_ROLE_ID) {
-            account_ids.push(user.account_id);
+            account_array.push({ account_id: user.account_id, account_type: 'self' });
             get_user_setting = await UserSetting.findOne({ where: { user_id: user.id } });
             cu_role_id.push(get_user_setting?.cu_role_id);
           }
@@ -75,7 +75,7 @@ export class AuthService {
           if (get_user_account_map.length > 0) {
 
             for (let i = 0; i < get_user_account_map.length; i++) {
-              account_ids.push(get_user_account_map[i].account_id);
+              account_array.push({ account_id: get_user_account_map[i].account_id, account_type: 'other' });
               get_user_invite = await UserInvite.findOne({ where: { email_address: user.email_address, account_id: get_user_account_map[i].account_id, status: 'accepted' } });
               cu_role_id.push(get_user_invite?.cu_role_id);
             }
@@ -84,11 +84,11 @@ export class AuthService {
 
         const tokens = [];
 
-        for (let i = 0; i < account_ids.length; i++) {
+        for (let i = 0; i < account_array.length; i++) {
 
           const get_user_details = await User.findOne({
             where: {
-              account_id: account_ids[i],
+              account_id: account_array[i].account_id,
               status: 'active',
             },
           });
@@ -97,7 +97,7 @@ export class AuthService {
             id: user.id,
             email_address: user.email_address,
             role_id: user.role_id,
-            account_id: account_ids[i],
+            account_id: account_array[i].account_id,
             project: project,
             session_id: create_session.id,
             customer_role_id: cu_role_id[i],
@@ -107,8 +107,9 @@ export class AuthService {
             email_address: get_user_details.email_address, 
             user_id: get_user_details.id,
             role_id: get_user_details.role_id,
-            account_id: account_ids[i], 
+            account_id: account_array[i].account_id, 
             name: get_user_details.name,
+            account_type: account_array[i].account_type,
             token: get_token 
           };
 
