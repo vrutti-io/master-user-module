@@ -225,7 +225,7 @@ export class AuthService {
           tokens.push(user_payload);
         }
 
-        if (user.role_id === CUSTOMER_ROLE_ID || user.role_id === CUSTOMER_CHILD_ROLE_ID) {
+        if (user.role_id === CUSTOMER_ROLE_ID && user.role_id === CUSTOMER_CHILD_ROLE_ID) {
           await get_user_setting.update({
             last_active: new Date(),
           });
