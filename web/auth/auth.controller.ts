@@ -251,7 +251,7 @@ export class AuthController {
       if (check_user && check_user.email_verified) return UnauthorizedResponse(res, req.t('AUTH.EMAIL_ADDRESS_ALREADY_EXIST'));
 
       if (check_user && !check_user.email_verified) {
-        await AuthService.sendEmailVerifyLink(res.locals.project, check_user, body.ip);
+        await AuthService.sendEmailVerifyLink(res.locals.project, check_user, body.ip ?? "");
         return SuccessResponse(res, req.t('AUTH.REGISTER_SUCCESS'), check_user);
       }
 
@@ -277,7 +277,7 @@ export class AuthController {
         cu_role_permission: find_customer_role.permission
       });
 
-      const email = await AuthService.sendEmailVerifyLink(res.locals.project, create_user, body.ip);
+      const email = await AuthService.sendEmailVerifyLink(res.locals.project, create_user, body.ip ?? "");
 
       const CUSTOMER_CONTENT = `<p>NAME:- ${body.name},<br>
       EMAIL ADDRESS:- ${body.email_address},<br>
@@ -389,7 +389,7 @@ export class AuthController {
       const expiry_time = moment(find_email.timestamp).add(EMAIL_RESEND_IN_MINS, 'minutes');
       if (moment().isBefore(expiry_time)) return UnauthorizedResponse(res, req.t('AUTH.EMAIL_VERIFY_LINK_SENT'));
 
-      await AuthService.sendEmailVerifyLink(res.locals.project, find_user, body.ip);
+      await AuthService.sendEmailVerifyLink(res.locals.project, find_user, body.ip ?? "");
 
       return SuccessResponse(res, req.t('AUTH.EMAIL_VERIFY_LINK_SENT'));
 
@@ -416,7 +416,7 @@ export class AuthController {
 
       if (!find_user) return UnauthorizedResponse(res, req.t('AUTH.EMAIL_ADDRESS_NOT_EXIST'));
 
-      const email = await AuthService.sendForgotPasswordLink(res.locals.project, find_user, body.ip);
+      const email = await AuthService.sendForgotPasswordLink(res.locals.project, find_user, body.ip ?? "");
 
       const response = {
         user_id: find_user.id,
