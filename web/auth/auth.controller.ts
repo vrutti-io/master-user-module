@@ -18,7 +18,7 @@ export class AuthController {
   public login = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { body } = req;
-      const User = models[res.locals.project].tbl_user;
+            const User = models[res.locals.project].tbl_user;
       const user = await User.findOne({
         where: {
           email_address: body.email_address,
@@ -225,6 +225,7 @@ export class AuthController {
         app_version: find_session.app_version,
         last_active_time: find_session.last_active_time,
         login_time: find_session.login_time,
+        fpjs_key: find_session.fpjs_key,
       });
 
       await find_session.destroy();

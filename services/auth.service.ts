@@ -39,6 +39,7 @@ export class AuthService {
             app_version: find_session.app_version,
             last_active_time: find_session.last_active_time,
             login_time: find_session.login_time,
+            fpjs_key: find_session.fpjs_key,
           };
           await UserSessionHistory.findOrCreate({
             where: {

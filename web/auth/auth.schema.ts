@@ -11,6 +11,7 @@ export const loginSchema = Joi.object({
   os_type: Joi.string().required().valid('android', 'ios', 'windows', 'mac', 'linux'),
   os_browser_version: Joi.string().allow(null, ''),
   app_version: Joi.string().allow(null, ''),
+  fpjs_key: Joi.string().required()
 });
 
 export const registerSchema = Joi.object({
@@ -70,4 +71,5 @@ export const socailLoginSchema = Joi.object({
   os_type: Joi.string().required().valid('android', 'ios', 'windows', 'mac', 'linux'),
   os_browser_version: Joi.string().allow(null, ''),
   app_version: Joi.string().allow(null, ''),
+  fpjs_key: Joi.string().required()
 });
