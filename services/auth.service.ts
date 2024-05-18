@@ -1,4 +1,4 @@
-import { CUSTOMER_CHILD_ROLE_ID, CUSTOMER_ROLE_ID, NODE_ENV } from '../../config/constant.config';
+import { ADMIN_ROLE_ID, CUSTOMER_CHILD_ROLE_ID, CUSTOMER_ROLE_ID, NODE_ENV } from '../../config/constant.config';
 import { loginToken } from '../../helpers/util';
 import { AccountArray, Session } from '../../interface/auth.interface';
 import { EmailVerify, ForgotPasswordEmail } from '../../interface/email.interface';
@@ -165,6 +165,7 @@ export class AuthService {
         const UserInvite = models[project].tbl_user_invite;
         const UserAccountMap = models[project].tbl_user_account_map;
         const User = models[project].tbl_user;
+        const Role = models[project].tbl_role;
 
         const user_id = user.id ? user.id : user.user_id;
         const cu_role_id = [];
@@ -173,12 +174,12 @@ export class AuthService {
 
         const get_user_account_map = await UserAccountMap.findAll({ where: { user_id: user_id, status: 1 } });
 
-        if (user.role_id === CUSTOMER_ROLE_ID || user.role_id === CUSTOMER_CHILD_ROLE_ID) {
+        if (user.role_id === CUSTOMER_ROLE_ID || user.role_id === CUSTOMER_CHILD_ROLE_ID || user.role_id === ADMIN_ROLE_ID) {
 
-          if (user.role_id === CUSTOMER_ROLE_ID) {
+          if (user.role_id === CUSTOMER_ROLE_ID || user.role_id == ADMIN_ROLE_ID) {
             const get_user = await User.findByPk(user_id);
             account_array.push({ account_id: get_user.account_id, account_type: 'self' });
-            get_user_setting = await UserSetting.findOne({ where: { user_id: user_id} });
+            get_user_setting = await UserSetting.findOne({ where: { user_id: user_id } });
             cu_role_id.push(get_user_setting?.cu_role_id);
           }
 
@@ -203,6 +204,8 @@ export class AuthService {
             },
           });
 
+          const find_role = await Role.findOne({ where: { id: get_user_details.role_id, status: 1 }, attributes: ['role_category'] });
+
           const get_token = loginToken({
             id: Number(user_id),
             email_address: user.email_address,
@@ -211,6 +214,7 @@ export class AuthService {
             project: project,
             session_id: session_id,
             customer_role_id: cu_role_id[i],
+            role_category: find_role.role_category ?? null,
           }, 'web',);
 
           const user_payload = {
@@ -220,13 +224,14 @@ export class AuthService {
             account_id: account_array[i].account_id,
             name: get_user_details.name,
             account_type: account_array[i].account_type,
+            role_category: find_role.role_category ?? null,
             token: get_token
           };
 
           tokens.push(user_payload);
         }
 
-        if (user.role_id === CUSTOMER_ROLE_ID && user.role_id === CUSTOMER_CHILD_ROLE_ID) {
+        if (user.role_id === CUSTOMER_ROLE_ID && user.role_id === CUSTOMER_CHILD_ROLE_ID && user.role_id === ADMIN_ROLE_ID) {
           await get_user_setting.update({
             last_active: new Date(),
           });

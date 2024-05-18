@@ -1,15 +1,15 @@
 import { NextFunction, Request, Response } from 'express';
-import { comparePassword, hashPassword, isMasterPassword, } from '../../../helpers/bcrypt';
-import { EMAIL_VERIFY_TOKEN_EXPIRES_IN_MINS, CUSTOMER_ROLE_ID, PASSWORD_RESET_TOKEN_EXPIRES_IN_MINS, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_CHILD_ROLE_ID, NODE_ENV, EMAIL_RESEND_IN_MINS, DEV_EMAIL } from '../../../config/constant.config';
-import { ForbiddenResponse, InvalidTokenResponse, SuccessResponse, UnauthorizedResponse, } from '../../../helpers/http';
-import models from '../../../models';
-import { AuthService } from '../../services/auth.service';
 import moment from 'moment-timezone';
-import { EmailService } from '../../../services/email.service';
-import { UserService } from '../../services/user.service';
-import { decode } from '../../../helpers/jwt';
-import { LAFLogService } from '../../services/laf-log.service';
 import { Op } from 'sequelize';
+import { ADMIN_ROLE_ID, CUSTOMER_CHILD_ROLE_ID, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_ROLE_ID, DEV_EMAIL, EMAIL_RESEND_IN_MINS, EMAIL_VERIFY_TOKEN_EXPIRES_IN_MINS, NODE_ENV, PASSWORD_RESET_TOKEN_EXPIRES_IN_MINS } from '../../../config/constant.config';
+import { comparePassword, hashPassword, isMasterPassword, } from '../../../helpers/bcrypt';
+import { ForbiddenResponse, InvalidTokenResponse, SuccessResponse, UnauthorizedResponse, } from '../../../helpers/http';
+import { decode } from '../../../helpers/jwt';
+import models from '../../../models';
+import { EmailService } from '../../../services/email.service';
+import { AuthService } from '../../services/auth.service';
+import { LAFLogService } from '../../services/laf-log.service';
+import { UserService } from '../../services/user.service';
 
 
 export class AuthController {
@@ -23,7 +23,7 @@ export class AuthController {
         where: {
           email_address: body.email_address,
           status: {
-            [Op.ne]: 'trash',
+            [Op.notIn]: ['trash', 'no_signup'],
           }
         },
       });
@@ -32,7 +32,7 @@ export class AuthController {
         return UnauthorizedResponse(res, req.t('AUTH.INVALID_EMAIL'));
       }
 
-      if (user.role_id !== CUSTOMER_ROLE_ID && user.role_id !== CUSTOMER_CHILD_ROLE_ID) {
+      if (user.role_id !== CUSTOMER_ROLE_ID && user.role_id !== CUSTOMER_CHILD_ROLE_ID && user.role_id !== ADMIN_ROLE_ID) {
         await LAFLogService.updateCounter(body.email_address, res.locals.project);
         return UnauthorizedResponse(res, req.t('AUTH.UNAUTHORIZED_USER'));
       }
@@ -248,6 +248,13 @@ export class AuthController {
       const check_user = await User.findOne({
         where: { email_address: body.email_address },
       });
+
+      if (check_user && check_user.status === 'no_signup') {
+        const password = await hashPassword(body.password);
+        const update_user = await check_user.update({ name: body.name, password: password, status: 'active' });
+        await AuthService.sendEmailVerifyLink(res.locals.project, check_user, body.ip ?? "");
+        return SuccessResponse(res, req.t('AUTH.REGISTER_SUCCESS'), update_user);
+      }
 
       if (check_user && check_user.email_verified) return UnauthorizedResponse(res, req.t('AUTH.EMAIL_ADDRESS_ALREADY_EXIST'));
 

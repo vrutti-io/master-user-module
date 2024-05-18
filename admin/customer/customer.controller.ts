@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
 import { Op } from 'sequelize';
+import { CUSTOMER_CHILD_ROLE_ID, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_ROLE_ID } from '../../../config/constant.config';
+import { BadRequestResponse, ConflictRequestResponse, SuccessResponse, UnauthorizedResponse } from '../../../helpers/http';
 import { pageLimit, pageOffset } from '../../../helpers/util';
-import { BadRequestResponse, ConflictRequestResponse, SuccessResponse } from '../../../helpers/http';
 import models from '../../../models';
 import { UserService, } from '../../services/user.service';
-import { CUSTOMER_CHILD_ROLE_ID, CUSTOMER_ROLE_ID } from '../../../config/constant.config';
 
 export class CustomerController {
     public getAllCustomer = async (req: Request, res: Response, next: NextFunction) => {
@@ -73,6 +73,58 @@ export class CustomerController {
             next(err);
         }
     };
+
+// this function developed for pcb click project so that admin can create customer account from backend to process the offline order
+    public createCustomer = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+
+            const { body } = req;
+
+            const User = models[res.locals.project].tbl_user;
+            const UserSetting = models[res.locals.project].tbl_user_setting;
+            const Account = models[res.locals.project].tbl_account;
+            const CustomerRole = models[res.locals.project].master_customer_role;
+
+            const check_user = await User.findOne({ where: { email_address: body.email_address } })
+
+            if (check_user) return UnauthorizedResponse(res, req.t('AUTH.EMAIL_ADDRESS_ALREADY_EXIST'));
+
+            const create_account = await Account.create({
+                email_address: body.email_address,
+            });
+
+            // const password = await hashPassword(body.password);
+
+            const create_user = await User.create({
+                name: body.name,
+                email_address: body.email_address,
+                account_id: create_account.id,
+                role_id: CUSTOMER_ROLE_ID,
+                mobile_no: body?.mobile_no ?? null,
+                status: 'no_signup',
+                // password
+            });
+
+            const find_customer_role = await CustomerRole.findByPk(CUSTOMER_OWNER_ROLE_ID);
+
+            await UserSetting.create({
+                user_id: create_user.id,
+                cu_role_id: CUSTOMER_OWNER_ROLE_ID,
+                cu_role_permission: find_customer_role.permission
+            });
+
+
+            if (create_user) {
+                return SuccessResponse(res, req.t('USER.CREATE_USER_SUCCESS'), create_user);
+            } else {
+                return ConflictRequestResponse(res, req.t('USER.USER_NOT_FOUND'));
+            }
+        } catch (err) {
+            next(err);
+        }
+
+    }
+
 
     public deleteCustomer = async (req: Request, res: Response, next: NextFunction) => {
         try {
@@ -173,6 +225,5 @@ export class CustomerController {
             next(err);
         }
     }
-
 
 }
