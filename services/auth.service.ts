@@ -162,7 +162,6 @@ export class AuthService {
     return new Promise(async (resolve, reject) => {
       try {
         const UserSetting = models[project].tbl_user_setting;
-        const UserInvite = models[project].tbl_user_invite;
         const UserAccountMap = models[project].tbl_user_account_map;
         const User = models[project].tbl_user;
         const Role = models[project].tbl_role;
