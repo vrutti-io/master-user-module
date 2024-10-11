@@ -1,4 +1,4 @@
-import { CUSTOMER_CHILD_ROLE_ID, CUSTOMER_ROLE_ID, DEV_EMAIL } from '../../config/constant.config';
+import { CUSTOMER_FINANCE_ROLE_ID, CUSTOMER_ROLE_ID, CUSTOMER_TECHNICAL_ROLE_ID, DEV_EMAIL } from '../../config/constant.config';
 import { loginToken } from '../../helpers/util';
 import { DecodeToken } from '../../interface/auth.interface';
 import { UpdateUserToken, User } from '../../interface/user.interface';
@@ -33,7 +33,7 @@ export class UserService {
                                 }
                             }
                         }
-                        if (find_user.role_id === CUSTOMER_CHILD_ROLE_ID) {
+                        if (find_user.role_id === CUSTOMER_FINANCE_ROLE_ID || find_user.role_id === CUSTOMER_TECHNICAL_ROLE_ID) {
                             await find_user.update({
                                 status: status, modified_by: modified_by, modified_time: new Date()
                             });
@@ -74,13 +74,13 @@ export class UserService {
                             modified_time: new Date()
                         });
                     }
-                    if ((find_user.role_id === CUSTOMER_ROLE_ID || find_user.role_id === CUSTOMER_CHILD_ROLE_ID)) {
+                    if ((find_user.role_id === CUSTOMER_ROLE_ID || find_user.role_id === CUSTOMER_FINANCE_ROLE_ID || find_user.role_id === CUSTOMER_TECHNICAL_ROLE_ID)) {
                         await deleteUserSession(project, find_user);
 
                         if (find_user.role_id === CUSTOMER_ROLE_ID) {
                             await deleteCustomerOwner(project, find_user);
                         }
-                        if (find_user.role_id === CUSTOMER_CHILD_ROLE_ID) {
+                        if (find_user.role_id === CUSTOMER_FINANCE_ROLE_ID || find_user.role_id === CUSTOMER_TECHNICAL_ROLE_ID) {
                             await deleteCustomerChild(project, find_user);
                         }
                     }
@@ -189,7 +189,7 @@ export class UserService {
                     project: project,
                     account_id: payload.account_id,
                     session_id: payload.session_id,
-                    customer_role_id: payload.customer_role_id,
+                    // customer_role_id: payload.customer_role_id,
                 }, 'web',);
 
                 const find_user_session = await UserSession.findOne({

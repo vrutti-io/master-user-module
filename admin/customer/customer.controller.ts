@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { Op } from 'sequelize';
-import { CUSTOMER_CHILD_ROLE_ID, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_ROLE_ID } from '../../../config/constant.config';
+import { CUSTOMER_FINANCE_ROLE_ID, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_ROLE_ID, CUSTOMER_TECHNICAL_ROLE_ID } from '../../../config/constant.config';
 import { BadRequestResponse, ConflictRequestResponse, SuccessResponse, UnauthorizedResponse } from '../../../helpers/http';
 import { pageLimit, pageOffset } from '../../../helpers/util';
 import models from '../../../models';
@@ -83,7 +83,7 @@ export class CustomerController {
             const User = models[res.locals.project].tbl_user;
             const UserSetting = models[res.locals.project].tbl_user_setting;
             const Account = models[res.locals.project].tbl_account;
-            const CustomerRole = models[res.locals.project].master_customer_role;
+            // const CustomerRole = models[res.locals.project].master_customer_role;
 
             const check_user = await User.findOne({ where: { email_address: body.email_address } })
 
@@ -105,12 +105,12 @@ export class CustomerController {
                 // password
             });
 
-            const find_customer_role = await CustomerRole.findByPk(CUSTOMER_OWNER_ROLE_ID);
+            // const find_customer_role = await CustomerRole.findByPk(CUSTOMER_OWNER_ROLE_ID);
 
             await UserSetting.create({
                 user_id: create_user.id,
-                cu_role_id: CUSTOMER_OWNER_ROLE_ID,
-                cu_role_permission: find_customer_role.permission
+                // cu_role_id: CUSTOMER_OWNER_ROLE_ID,
+                // cu_role_permission: find_customer_role.permission
             });
 
 
@@ -178,7 +178,9 @@ export class CustomerController {
             const find_child_user = await User.findAll({
                 where: {
                     account_id: account_id,
-                    role_id: CUSTOMER_CHILD_ROLE_ID,
+                    role_id: {
+                        [Op.in]: [CUSTOMER_FINANCE_ROLE_ID, CUSTOMER_TECHNICAL_ROLE_ID]
+                    },
                     status: {
                         [Op.ne]: 'trash'
                     }

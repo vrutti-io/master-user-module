@@ -3,7 +3,7 @@ import { BadRequestResponse, SuccessResponse, UnauthorizedResponse, } from '../.
 import models from '../../../models';
 import { UserService } from '../../services/user.service';
 import { EmailService } from '../../../services/email.service';
-import { CUSTOMER_CHILD_ROLE_ID, CUSTOMER_ROLE_ID, OTP_EXPIRES_IN_MINS } from '../../../config/constant.config';
+import { CUSTOMER_FINANCE_ROLE_ID, CUSTOMER_ROLE_ID, CUSTOMER_TECHNICAL_ROLE_ID, OTP_EXPIRES_IN_MINS } from '../../../config/constant.config';
 import moment from 'moment-timezone';
 import { UpdateUserToken } from '../../../interface/user.interface';
 
@@ -50,7 +50,7 @@ export class UserController {
 
       let account_name = find_user.name;
 
-      if (find_user.role_id === CUSTOMER_CHILD_ROLE_ID) {
+      if (find_user.role_id === CUSTOMER_FINANCE_ROLE_ID || find_user.role_id === CUSTOMER_TECHNICAL_ROLE_ID) {
         const find_parent_user = await User.findOne({
           where: {
             account_id: find_user.account_id,
@@ -70,7 +70,7 @@ export class UserController {
         lang: find_user_settings.lang,
         is_social_login: find_user.social_auth_token ? true : false,
         is_password_set: find_user.password ? true : false,
-        is_child_account: find_user.role_id === CUSTOMER_CHILD_ROLE_ID ? true : false,
+        is_child_account: (find_user.role_id === CUSTOMER_FINANCE_ROLE_ID || find_user.role_id === CUSTOMER_TECHNICAL_ROLE_ID) ? true : false,
         account_name: account_name
       };
 
@@ -216,7 +216,7 @@ export class UserController {
         email_address: find_otp.email_address,
         old_email_address: find_user.email_address,
         session_id: res.locals.user.session_id,
-        customer_role_id: res.locals.user.customer_role_id,
+        // customer_role_id: res.locals.user.customer_role_id,
         account_id: res.locals.user.account_id,
         role_id: res.locals.user.role_id,
       };

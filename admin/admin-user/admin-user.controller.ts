@@ -5,7 +5,7 @@ import { BadRequestResponse, ConflictRequestResponse, SuccessResponse, Unauthori
 import models from '../../../models';
 import { hashPassword } from '../../../helpers/bcrypt';
 import { UserService, } from '../../services/user.service';
-import { CUSTOMER_CHILD_ROLE_ID, CUSTOMER_ROLE_ID } from '../../../config/constant.config';
+import { CUSTOMER_FINANCE_ROLE_ID, CUSTOMER_ROLE_ID, CUSTOMER_TECHNICAL_ROLE_ID } from '../../../config/constant.config';
 
 export class AdminUserController {
   public getAllUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -28,7 +28,9 @@ export class AdminUserController {
           [Op.and]: [{
             [Op.ne]: CUSTOMER_ROLE_ID
           }, {
-            [Op.ne]: CUSTOMER_CHILD_ROLE_ID
+            [Op.ne]: CUSTOMER_FINANCE_ROLE_ID
+          },{
+            [Op.ne]: CUSTOMER_TECHNICAL_ROLE_ID
           }]
 
         }

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { SuccessResponse } from "../../../helpers/http";
+import { BadRequestResponse, SuccessResponse } from "../../../helpers/http";
 import models from "../../../models";
 
 
@@ -7,20 +7,42 @@ export class PermissionController {
 
     public getAllPermissions = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const UserSetting = models[res.locals.project].tbl_user_setting;
+            // const UserSetting = models[res.locals.project].tbl_user_setting;
 
-            const user_setting = await UserSetting.findOne({
+            // const user_setting = await UserSetting.findOne({
+            //     where: {
+            //         user_id: res.locals.user.user_id
+            //     },
+            //     attributes: ['cu_role_permission']
+            // });
+
+            // const permission = {
+            //     ...user_setting?.cu_role_permission ?? null,
+            // }
+
+            // return SuccessResponse(res, req.t('COMMON.GET'), permission);
+
+            const Permission = models[res.locals.project].tbl_permission;
+            const Module = models[res.locals.project].tbl_module;
+            Permission.belongsTo(Module, { foreignKey: { name: 'module_id', allowNull: false } });
+            const permission = await Permission.findAll({
                 where: {
-                    user_id: res.locals.user.user_id
+                    role_id: res.locals.user.role_id,
                 },
-                attributes: ['cu_role_permission']
+                include: [
+                    {
+                        model: Module,
+                        where: {
+                            category: 'customer',
+                            status: 1,
+                        },
+                        attributes: ['name'],
+                    },
+                ],
             });
-
-            const permission = {
-                ...user_setting?.cu_role_permission ?? null,
-            }
-
             return SuccessResponse(res, req.t('COMMON.GET'), permission);
+
+
         } catch (err) {
             next(err);
         }
@@ -28,18 +50,45 @@ export class PermissionController {
 
     public getPermissionByModule = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const UserSetting = models[res.locals.project].tbl_user_setting;
+            // const UserSetting = models[res.locals.project].tbl_user_setting;
 
-            const user_setting = await UserSetting.findOne({
+            // const user_setting = await UserSetting.findOne({
+            //     where: {
+            //         user_id: res.locals.user.user_id
+            //     },
+            //     attributes: ['cu_role_permission']
+            // });
+            // const permission = user_setting?.cu_role_permission ?? null;
+            // const { module } = req.params;
+            // const module_permission = permission[module] ?? null;
+            // return SuccessResponse(res, req.t('COMMON.GET'), module_permission);
+
+            const { user } = res.locals;
+            const { module_name } = req.params;
+            const Module = models[res.locals.project].tbl_module;
+            const Permission = models[res.locals.project].tbl_permission;
+            let response_obj = {
+                read: 0,
+                write: 0,
+                update: 0,
+                delete: 0,
+            };
+            const module = await Module.findOne({ where: { name: module_name, category: 'customer' } });
+            if (!module) return BadRequestResponse(res, "Module not found");
+            const permission = await Permission.findOne({
                 where: {
-                    user_id: res.locals.user.user_id
+                    module_id: module.id,
+                    role_id: user.role_id,
                 },
-                attributes: ['cu_role_permission']
             });
-            const permission = user_setting?.cu_role_permission ?? null;
-            const { module } = req.params;
-            const module_permission = permission[module] ?? null;
-            return SuccessResponse(res, req.t('COMMON.GET'), module_permission);
+            if (!permission) return BadRequestResponse(res, "Permission not found");
+            response_obj = {
+                read: permission.permission_read,
+                write: permission.permission_write,
+                update: permission.permission_update,
+                delete: permission.permission_delete,
+            };
+            return SuccessResponse(res, req.t('COMMON.GET'), response_obj);
         } catch (err) {
             next(err);
         }

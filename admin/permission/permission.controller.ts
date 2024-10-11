@@ -39,6 +39,10 @@ export class AdminPermissionController {
         include: [
           {
             model: Module,
+            where: {
+              category: 'admin',
+              status: 1,
+            },
             attributes: ['name'],
           },
         ],
@@ -123,7 +127,7 @@ export class AdminPermissionController {
         update: 0,
         delete: 0,
       };
-      const module = await Module.findOne({ where: { name: module_name } });
+      const module = await Module.findOne({ where: { name: module_name, category: 'admin' } });
       if (!module) return BadRequestResponse(res, "Module not found");
       const permission = await Permission.findOne({
         where: {

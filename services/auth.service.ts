@@ -1,4 +1,4 @@
-import { ADMIN_ROLE_ID, CUSTOMER_CHILD_ROLE_ID, CUSTOMER_ROLE_ID, NODE_ENV } from '../../config/constant.config';
+import { ADMIN_ROLE_ID, CUSTOMER_FINANCE_ROLE_ID, CUSTOMER_ROLE_ID, CUSTOMER_TECHNICAL_ROLE_ID, NODE_ENV } from '../../config/constant.config';
 import { loginToken } from '../../helpers/util';
 import { AccountArray, Session } from '../../interface/auth.interface';
 import { EmailVerify, ForgotPasswordEmail } from '../../interface/email.interface';
@@ -168,19 +168,19 @@ export class AuthService {
         const Role = models[project].tbl_role;
 
         const user_id = user.id ? user.id : user.user_id;
-        const cu_role_id = [];
+        // const cu_role_id = [];
         const account_array: AccountArray[] = [];
         let get_user_setting, get_user_invite;
 
         const get_user_account_map = await UserAccountMap.findAll({ where: { user_id: user_id, status: 1 } });
 
-        if (user.role_id === CUSTOMER_ROLE_ID || user.role_id === CUSTOMER_CHILD_ROLE_ID || user.role_id === ADMIN_ROLE_ID) {
+        if (user.role_id === CUSTOMER_ROLE_ID || user.role_id === CUSTOMER_FINANCE_ROLE_ID || user.role_id === CUSTOMER_TECHNICAL_ROLE_ID || user.role_id === ADMIN_ROLE_ID) {
 
           if (user.role_id === CUSTOMER_ROLE_ID || user.role_id == ADMIN_ROLE_ID) {
             const get_user = await User.findByPk(user_id);
             account_array.push({ account_id: get_user.account_id, account_type: 'self' });
             get_user_setting = await UserSetting.findOne({ where: { user_id: user_id } });
-            cu_role_id.push(get_user_setting?.cu_role_id);
+            // cu_role_id.push(get_user_setting?.cu_role_id);
           }
 
           if (get_user_account_map.length > 0) {
@@ -188,7 +188,7 @@ export class AuthService {
             for (let i = 0; i < get_user_account_map.length; i++) {
               account_array.push({ account_id: get_user_account_map[i].account_id, account_type: 'other' });
               get_user_invite = await UserInvite.findOne({ where: { email_address: user.email_address, account_id: get_user_account_map[i].account_id, status: 'accepted' } });
-              cu_role_id.push(get_user_invite?.cu_role_id);
+              // cu_role_id.push(get_user_invite?.cu_role_id);
             }
           }
         }
@@ -213,7 +213,7 @@ export class AuthService {
             account_id: account_array[i].account_id,
             project: project,
             session_id: session_id,
-            customer_role_id: cu_role_id[i],
+            // customer_role_id: cu_role_id[i],
             role_category: find_role.role_category ?? null,
           }, 'web',);
 
@@ -231,7 +231,7 @@ export class AuthService {
           tokens.push(user_payload);
         }
 
-        if (user.role_id === CUSTOMER_ROLE_ID && user.role_id === CUSTOMER_CHILD_ROLE_ID && user.role_id === ADMIN_ROLE_ID) {
+        if (user.role_id === CUSTOMER_ROLE_ID && user.role_id === CUSTOMER_FINANCE_ROLE_ID && user.role_id === CUSTOMER_TECHNICAL_ROLE_ID && user.role_id === ADMIN_ROLE_ID) {
           await get_user_setting.update({
             last_active: new Date(),
           });

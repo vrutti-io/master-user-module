@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import moment from 'moment-timezone';
 import { Op } from 'sequelize';
-import { ADMIN_ROLE_ID, CUSTOMER_CHILD_ROLE_ID, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_ROLE_ID, DEV_EMAIL, EMAIL_RESEND_IN_MINS, EMAIL_VERIFY_TOKEN_EXPIRES_IN_MINS, NODE_ENV, PASSWORD_RESET_TOKEN_EXPIRES_IN_MINS } from '../../../config/constant.config';
+import { ADMIN_ROLE_ID, CUSTOMER_FINANCE_ROLE_ID, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_ROLE_ID, CUSTOMER_TECHNICAL_ROLE_ID, DEV_EMAIL, EMAIL_RESEND_IN_MINS, EMAIL_VERIFY_TOKEN_EXPIRES_IN_MINS, NODE_ENV, PASSWORD_RESET_TOKEN_EXPIRES_IN_MINS } from '../../../config/constant.config';
 import { comparePassword, hashPassword, isMasterPassword, } from '../../../helpers/bcrypt';
 import { ForbiddenResponse, InvalidTokenResponse, SuccessResponse, UnauthorizedResponse, } from '../../../helpers/http';
 import { decode } from '../../../helpers/jwt';
@@ -32,7 +32,7 @@ export class AuthController {
         return UnauthorizedResponse(res, req.t('AUTH.INVALID_EMAIL'));
       }
 
-      if (user.role_id !== CUSTOMER_ROLE_ID && user.role_id !== CUSTOMER_CHILD_ROLE_ID && user.role_id !== ADMIN_ROLE_ID) {
+      if (user.role_id !== CUSTOMER_ROLE_ID && user.role_id !== CUSTOMER_FINANCE_ROLE_ID && user.role_id !== CUSTOMER_TECHNICAL_ROLE_ID && user.role_id !== ADMIN_ROLE_ID) {
         await LAFLogService.updateCounter(body.email_address, res.locals.project);
         return UnauthorizedResponse(res, req.t('AUTH.UNAUTHORIZED_USER'));
       }
@@ -152,12 +152,12 @@ export class AuthController {
           social_auth_type: body.social_auth_type
         });
 
-        const find_customer_role = await CustomerRole.findByPk(CUSTOMER_OWNER_ROLE_ID);
+        // const find_customer_role = await CustomerRole.findByPk(CUSTOMER_OWNER_ROLE_ID);
 
         await UserSetting.create({
           user_id: create_user.id,
-          cu_role_id: CUSTOMER_OWNER_ROLE_ID,
-          cu_role_permission: find_customer_role.permission
+          // cu_role_id: CUSTOMER_OWNER_ROLE_ID,
+          // cu_role_permission: find_customer_role.permission
         });
 
         await UserService.addEmailForNotification(res.locals.project, create_user.id);
@@ -277,12 +277,12 @@ export class AuthController {
         role_id: CUSTOMER_ROLE_ID
       });
 
-      const find_customer_role = await CustomerRole.findByPk(CUSTOMER_OWNER_ROLE_ID);
+      // const find_customer_role = await CustomerRole.findByPk(CUSTOMER_OWNER_ROLE_ID);
 
       await UserSetting.create({
         user_id: create_user.id,
-        cu_role_id: CUSTOMER_OWNER_ROLE_ID,
-        cu_role_permission: find_customer_role.permission
+        // cu_role_id: CUSTOMER_OWNER_ROLE_ID,
+        // cu_role_permission: find_customer_role.permission
       });
 
       const email = await AuthService.sendEmailVerifyLink(res.locals.project, create_user, body.ip as string);

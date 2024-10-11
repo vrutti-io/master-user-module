@@ -130,8 +130,8 @@ export class TeamController {
 
         await UserSetting.create({
           user_id: create_user.id,
-          cu_role_id: find_invite.cu_role_id,
-          cu_role_permission: find_invite.cu_role_permission
+          // cu_role_id: find_invite.cu_role_id,
+          // cu_role_permission: find_invite.cu_role_permission
         });
 
         await UserService.addEmailForNotification(res.locals.project, create_user.id);
