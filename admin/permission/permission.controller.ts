@@ -17,7 +17,7 @@ export class AdminPermissionController {
         include: [
           {
             model: Module,
-            attributes: ['name'],
+            attributes: ['name', 'category'],
           },
         ],
       });
