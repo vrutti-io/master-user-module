@@ -16,7 +16,7 @@ export class RoleController {
           level: {
             [Op.gte]: role.level
           },
-          role_category: 'admin'
+          // role_category: 'admin'
         };
       } else if (role) {
         role_search = {
@@ -24,7 +24,7 @@ export class RoleController {
           level: {
             [Op.gt]: role.level
           },
-          role_category: 'admin'
+          // role_category: 'admin'
         };
       }
       const roles = await Role.findAll({
