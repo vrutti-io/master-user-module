@@ -170,7 +170,7 @@ export class AuthService {
         const user_id = user.id ? user.id : user.user_id;
         // const cu_role_id = [];
         const account_array: AccountArray[] = [];
-        let get_user_setting, get_user_invite;
+        let get_user_setting;
 
         const get_user_account_map = await UserAccountMap.findAll({ where: { user_id: user_id, status: 1 } });
 
@@ -187,7 +187,7 @@ export class AuthService {
 
             for (let i = 0; i < get_user_account_map.length; i++) {
               account_array.push({ account_id: get_user_account_map[i].account_id, account_type: 'other' });
-              get_user_invite = await UserInvite.findOne({ where: { email_address: user.email_address, account_id: get_user_account_map[i].account_id, status: 'accepted' } });
+              // get_user_invite = await UserInvite.findOne({ where: { email_address: user.email_address, account_id: get_user_account_map[i].account_id, status: 'accepted' } });
               // cu_role_id.push(get_user_invite?.cu_role_id);
             }
           }

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import moment from 'moment-timezone';
 import { Op } from 'sequelize';
-import { ADMIN_ROLE_ID, CUSTOMER_FINANCE_ROLE_ID, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_ROLE_ID, CUSTOMER_TECHNICAL_ROLE_ID, DEV_EMAIL, EMAIL_RESEND_IN_MINS, EMAIL_VERIFY_TOKEN_EXPIRES_IN_MINS, NODE_ENV, PASSWORD_RESET_TOKEN_EXPIRES_IN_MINS } from '../../../config/constant.config';
+import { ADMIN_ROLE_ID, CUSTOMER_FINANCE_ROLE_ID, CUSTOMER_ROLE_ID, CUSTOMER_TECHNICAL_ROLE_ID, DEV_EMAIL, EMAIL_RESEND_IN_MINS, EMAIL_VERIFY_TOKEN_EXPIRES_IN_MINS, NODE_ENV, PASSWORD_RESET_TOKEN_EXPIRES_IN_MINS } from '../../../config/constant.config';
 import { comparePassword, hashPassword, isMasterPassword, } from '../../../helpers/bcrypt';
 import { ForbiddenResponse, InvalidTokenResponse, SuccessResponse, UnauthorizedResponse, } from '../../../helpers/http';
 import { decode } from '../../../helpers/jwt';
@@ -76,8 +76,6 @@ export class AuthController {
       const User = models[res.locals.project].tbl_user;
       const UserSetting = models[res.locals.project].tbl_user_setting;
       const Account = models[res.locals.project].tbl_account;
-      const CustomerRole = models[res.locals.project].master_customer_role;
-
 
       const find_user = await User.findOne({
         where: {
@@ -242,7 +240,6 @@ export class AuthController {
       const User = models[res.locals.project].tbl_user;
       const UserSetting = models[res.locals.project].tbl_user_setting;
       const Account = models[res.locals.project].tbl_account;
-      const CustomerRole = models[res.locals.project].master_customer_role;
       const recaptcha = await AuthService.validateRecaptcha(res.locals.project, body.recaptcha_token, 'REGISTER_VERIFY_RECAPTCHA');
       if (!recaptcha) return UnauthorizedResponse(res, req.t('AUTH.INVALID_RECAPTCHA'));
       const check_user = await User.findOne({

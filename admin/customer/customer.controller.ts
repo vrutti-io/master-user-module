@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { Op } from 'sequelize';
-import { CUSTOMER_FINANCE_ROLE_ID, CUSTOMER_OWNER_ROLE_ID, CUSTOMER_ROLE_ID, CUSTOMER_TECHNICAL_ROLE_ID } from '../../../config/constant.config';
+import { CUSTOMER_FINANCE_ROLE_ID, CUSTOMER_ROLE_ID, CUSTOMER_TECHNICAL_ROLE_ID } from '../../../config/constant.config';
 import { BadRequestResponse, ConflictRequestResponse, SuccessResponse, UnauthorizedResponse } from '../../../helpers/http';
 import { pageLimit, pageOffset } from '../../../helpers/util';
 import models from '../../../models';
@@ -83,7 +83,6 @@ export class CustomerController {
             const User = models[res.locals.project].tbl_user;
             const UserSetting = models[res.locals.project].tbl_user_setting;
             const Account = models[res.locals.project].tbl_account;
-            // const CustomerRole = models[res.locals.project].master_customer_role;
 
             const check_user = await User.findOne({ where: { email_address: body.email_address } })
 
