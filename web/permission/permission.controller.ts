@@ -7,21 +7,6 @@ export class PermissionController {
 
     public getAllPermissions = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            // const UserSetting = models[res.locals.project].tbl_user_setting;
-
-            // const user_setting = await UserSetting.findOne({
-            //     where: {
-            //         user_id: res.locals.user.user_id
-            //     },
-            //     attributes: ['cu_role_permission']
-            // });
-
-            // const permission = {
-            //     ...user_setting?.cu_role_permission ?? null,
-            // }
-
-            // return SuccessResponse(res, req.t('COMMON.GET'), permission);
-
             const Permission = models[res.locals.project].tbl_permission;
             const Module = models[res.locals.project].tbl_module;
             Permission.belongsTo(Module, { foreignKey: { name: 'module_id', allowNull: false } });
@@ -50,19 +35,6 @@ export class PermissionController {
 
     public getPermissionByModule = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            // const UserSetting = models[res.locals.project].tbl_user_setting;
-
-            // const user_setting = await UserSetting.findOne({
-            //     where: {
-            //         user_id: res.locals.user.user_id
-            //     },
-            //     attributes: ['cu_role_permission']
-            // });
-            // const permission = user_setting?.cu_role_permission ?? null;
-            // const { module } = req.params;
-            // const module_permission = permission[module] ?? null;
-            // return SuccessResponse(res, req.t('COMMON.GET'), module_permission);
-
             const { user } = res.locals;
             const { module_name } = req.params;
             const Module = models[res.locals.project].tbl_module;

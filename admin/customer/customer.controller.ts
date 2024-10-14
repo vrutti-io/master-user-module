@@ -108,8 +108,7 @@ export class CustomerController {
 
             await UserSetting.create({
                 user_id: create_user.id,
-                // cu_role_id: CUSTOMER_OWNER_ROLE_ID,
-                // cu_role_permission: find_customer_role.permission
+                role_id: CUSTOMER_ROLE_ID,
             });
 
 

@@ -167,7 +167,6 @@ export class AuthService {
         const Role = models[project].tbl_role;
 
         const user_id = user.id ? user.id : user.user_id;
-        // const cu_role_id = [];
         const account_array: AccountArray[] = [];
         let get_user_setting;
 
@@ -179,15 +178,12 @@ export class AuthService {
             const get_user = await User.findByPk(user_id);
             account_array.push({ account_id: get_user.account_id, account_type: 'self' });
             get_user_setting = await UserSetting.findOne({ where: { user_id: user_id } });
-            // cu_role_id.push(get_user_setting?.cu_role_id);
           }
 
           if (get_user_account_map.length > 0) {
 
             for (let i = 0; i < get_user_account_map.length; i++) {
               account_array.push({ account_id: get_user_account_map[i].account_id, account_type: 'other' });
-              // get_user_invite = await UserInvite.findOne({ where: { email_address: user.email_address, account_id: get_user_account_map[i].account_id, status: 'accepted' } });
-              // cu_role_id.push(get_user_invite?.cu_role_id);
             }
           }
         }
@@ -212,7 +208,6 @@ export class AuthService {
             account_id: account_array[i].account_id,
             project: project,
             session_id: session_id,
-            // customer_role_id: cu_role_id[i],
             role_category: find_role.role_category ?? null,
           }, 'web',);
 

@@ -154,8 +154,7 @@ export class AuthController {
 
         await UserSetting.create({
           user_id: create_user.id,
-          // cu_role_id: CUSTOMER_OWNER_ROLE_ID,
-          // cu_role_permission: find_customer_role.permission
+          role_id: CUSTOMER_ROLE_ID,
         });
 
         await UserService.addEmailForNotification(res.locals.project, create_user.id);
@@ -278,8 +277,7 @@ export class AuthController {
 
       await UserSetting.create({
         user_id: create_user.id,
-        // cu_role_id: CUSTOMER_OWNER_ROLE_ID,
-        // cu_role_permission: find_customer_role.permission
+        role_id: CUSTOMER_ROLE_ID,
       });
 
       const email = await AuthService.sendEmailVerifyLink(res.locals.project, create_user, body.ip as string);

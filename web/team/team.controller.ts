@@ -31,8 +31,7 @@ export class TeamController {
         email_address: body.email_address,
         name: body.name,
         invitation_code: invitation_code,
-        cu_role_id: body.cu_role_id,
-        cu_role_permission: body.cu_role_permission,
+        role_id: body.role_id,
         invited_by: res.locals.user.user_id,
         status: 'invited',
       });
@@ -103,7 +102,7 @@ export class TeamController {
       const find_user = await User.findOne({
         where: {
           email_address: find_invite.email_address,
-          status: { 
+          status: {
             [Op.or]: ['pending', 'active']
           },
         },
@@ -123,15 +122,14 @@ export class TeamController {
           password: password,
           status: 'active',
           email_verified: true,
-          role_id: CUSTOMER_CHILD_ROLE_ID
+          role_id: find_invite.role_id,
         });
 
         userId = create_user.id;
 
         await UserSetting.create({
           user_id: create_user.id,
-          // cu_role_id: find_invite.cu_role_id,
-          // cu_role_permission: find_invite.cu_role_permission
+          role_id: find_invite.role_id,
         });
 
         await UserService.addEmailForNotification(res.locals.project, create_user.id);
@@ -267,8 +265,7 @@ export class TeamController {
       if (find_invite) {
 
         await find_invite.update({
-          cu_role_id: body.cu_role_id,
-          cu_role_permission: body.cu_role_permission
+          role_id: body.role_id,
         });
 
         if (find_invite.status === 'accepted') {
@@ -277,8 +274,7 @@ export class TeamController {
           if (find_user) {
 
             await UserSetting.update({
-              cu_role_id: body.cu_role_id,
-              cu_role_permission: body.cu_role_permission
+              role_id: body.role_id
             }, {
               where: {
                 user_id: find_user.id
@@ -306,7 +302,7 @@ export class TeamController {
             [Op.ne]: 'cancelled'
           }
         },
-        attributes: ['id', 'email_address', 'status', 'cu_role_id', 'cu_role_permission'],
+        attributes: ['id', 'email_address', 'status', 'role_id'],
         order: [['created_time', 'DESC']]
       });
 
