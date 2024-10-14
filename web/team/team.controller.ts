@@ -5,7 +5,7 @@ import { randomString } from '../../../helpers/util';
 import { hashPassword } from '../../../helpers/bcrypt';
 import { UserService } from '../../services/user.service';
 import { EmailService } from '../../../services/email.service';
-import { CUSTOMER_CHILD_ROLE_ID, INVITATION_RESEND_IN_MINS } from '../../../config/constant.config';
+import { INVITATION_RESEND_IN_MINS } from '../../../config/constant.config';
 import { Op } from 'sequelize';
 import moment from 'moment-timezone';
 
