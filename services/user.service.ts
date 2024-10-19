@@ -189,6 +189,7 @@ export class UserService {
                     project: project,
                     account_id: payload.account_id,
                     session_id: payload.session_id,
+                    role_category: payload.role_category,
                 }, 'web',);
 
                 const find_user_session = await UserSession.findOne({

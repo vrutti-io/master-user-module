@@ -52,7 +52,6 @@ export class AdminAuthController {
       await LAFLogService.resetCounter(body.email_address, res.locals.project);
 
       user['project'] = res.locals.project;
-      console.log('user: ', user);
 
       const token = loginToken(user, 'admin');
       const response = {

@@ -187,11 +187,17 @@ export class UserController {
       const { body } = req;
       const User = models[res.locals.project].tbl_user;
       const VerificationCode = models[res.locals.project].tbl_verification_code;
+      const Role = models[res.locals.project].tbl_role;
 
       const find_user = await User.findOne({
         where: {
           id: res.locals.user.user_id,
         },
+        include: {
+          model: Role,
+          as: 'role',
+          attributes: ['role_category'],
+        }
       });
 
       if (!find_user) return UnauthorizedResponse(res, req.t('CUSTOMER.USER_NOT_FOUND'));
@@ -216,9 +222,9 @@ export class UserController {
         email_address: find_otp.email_address,
         old_email_address: find_user.email_address,
         session_id: res.locals.user.session_id,
-        // customer_role_id: res.locals.user.customer_role_id,
         account_id: res.locals.user.account_id,
         role_id: res.locals.user.role_id,
+        role_category: find_user.role.role_category,
       };
 
       const token = await UserService.updateUserToken(res.locals.project, payload);
