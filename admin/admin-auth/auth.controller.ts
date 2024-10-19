@@ -18,6 +18,10 @@ export class AdminAuthController {
           status: {
             [Op.ne]: 'trash',
           },
+          include: {
+            model: models[res.locals.project].tbl_role,
+            attributes: ['role_category'],
+          },
         },
       });
       if (!user) {
@@ -48,6 +52,7 @@ export class AdminAuthController {
       await LAFLogService.resetCounter(body.email_address, res.locals.project);
 
       user['project'] = res.locals.project;
+      console.log('user: ', user);
 
       const token = loginToken(user, 'admin');
       const response = {
