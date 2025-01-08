@@ -139,7 +139,7 @@ export class AuthService {
     return new Promise(async (resolve, reject) => {
       try {
         if (NODE_ENV === 'test') return resolve(true);
-        const secret_key = ProjectService.config[project].CAPTCHA_SITE_KEY;
+        const secret_key = ProjectService.config[project].CAPTCHA_SECRET_KEY;
         const response = await axios.post(`https://www.google.com/recaptcha/api/siteverify?secret=${secret_key}&response=${token}`);
         if (response.data.success) {
           if (response.data.action && response.data.action != action) {
